@@ -9,7 +9,7 @@
 #include <V2Solenoids.h>
 #include <V2Stepper.h>
 
-V2DEVICE_METADATA("com.versioduo.hihat", 3, "versioduo:samd:drum");
+V2DEVICE_METADATA("com.versioduo.hihat", 4, "versioduo:samd:drum");
 
 namespace {
   namespace LEDs {
@@ -392,7 +392,7 @@ namespace {
 
       // https://github.com/versioduo/arduino-board-package/blob/main/boards.txt
       usb.pid            = 0xe9e0;
-      usb.ports.standard = 8;
+      usb.ports.standard = 16;
     }
 
     auto allNotesOff() {
