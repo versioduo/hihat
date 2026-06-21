@@ -711,7 +711,7 @@ namespace {
     // Receive a host event from our parent device.
     auto receivePlug(V2Link::Packet* packet) -> void override {
       if (packet->getType() == V2Link::Packet::Type::MIDI) {
-        packet->receive(&_midi);
+        packet->copyTo(_midi);
         Device.dispatch(&Plug, &_midi);
       }
     }
@@ -723,7 +723,7 @@ namespace {
           return;
 
         if (Device.usb.midi.connected()) {
-          packet->receive(&_midi);
+          packet->copyTo(_midi);
           _midi.setPort(packet->getAddress() + 1);
           Device.usb.midi.send(&_midi);
         }
