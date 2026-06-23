@@ -9,7 +9,7 @@
 #include <V2Solenoids.h>
 #include <V2Stepper.h>
 
-V2DEVICE_METADATA("com.versioduo.hihat", 4, "versioduo:samd:drum");
+V2DEVICE_METADATA("com.versioduo.hihat", 5, "versioduo:samd:drum");
 
 namespace {
   namespace LEDs {
@@ -682,20 +682,21 @@ namespace {
   class MIDI {
   public:
     auto loop() {
-      if (!Device.usb.midi.receive(&_midi))
+      if (!Device.usb.midi.receive(_midi))
         return;
 
-      if (_midi.getPort() == 0) {
+      if (_midi.port == 0) {
         Device.dispatch(&Device.usb.midi, &_midi);
 
       } else {
-        _midi.setPort(_midi.getPort() - 1);
-        Socket.send(&_midi);
+        V2Link::Packet p(_midi.port - 1, _midi);
+        p.midi.port = 0;
+        Socket.send(p);
       }
     }
 
   private:
-    V2MIDI::Packet _midi{};
+    V2MIDI::Packet _midi;
   } MIDI;
 
   // Dispatch Link packets.
@@ -706,27 +707,17 @@ namespace {
     }
 
   private:
-    V2MIDI::Packet _midi{};
-
     // Receive a host event from our parent device.
-    auto receivePlug(V2Link::Packet* packet) -> void override {
-      if (packet->getType() == V2Link::Packet::Type::MIDI) {
-        packet->copyTo(_midi);
-        Device.dispatch(&Plug, &_midi);
-      }
+    auto receivePlug(V2Link::Packet& p) -> void override {
+      if (p.type == V2Link::Packet::Type::MIDI)
+        Device.dispatch(&Plug, &p.midi);
     }
 
     // Forward children device events to the host.
-    auto receiveSocket(V2Link::Packet* packet) -> void override {
-      if (packet->getType() == V2Link::Packet::Type::MIDI) {
-        if (packet->getAddress() == 0x0f)
-          return;
-
-        if (Device.usb.midi.connected()) {
-          packet->copyTo(_midi);
-          _midi.setPort(packet->getAddress() + 1);
-          Device.usb.midi.send(&_midi);
-        }
+    auto receiveSocket(V2Link::Packet& p) -> void override {
+      if (p.type == V2Link::Packet::Type::MIDI) {
+        p.midi.port = p.address;
+        Device.usb.midi.send(p.midi);
       }
     }
   } Link;
