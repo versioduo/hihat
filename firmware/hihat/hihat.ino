@@ -9,8 +9,6 @@
 #include <V2Solenoids.h>
 #include <V2Stepper.h>
 
-V2DEVICE_METADATA("com.versioduo.hihat", 8, "versioduo:samd:drum");
-
 namespace {
   namespace LEDs {
     enum Position {
@@ -21,6 +19,7 @@ namespace {
     };
   }
 
+  V2Device::Info            Info{V2DeviceInfo("com.versioduo.hihat", 8, "versioduo:samd:drum")};
   V2LED::WS2812<LEDs::size> LED(PIN_LED_WS2812, sercom2, SPI_PAD_0_SCK_1, PIO_SERCOM);
   V2LED::WS2812<16>         LEDExt(PIN_LED_WS2812_EXT, sercom4, SPI_PAD_0_SCK_1, PIO_SERCOM);
   V2Link::Port              Plug(&SerialPlug, PIN_SERIAL_PLUG_TX_ENABLE, "plug");
@@ -384,13 +383,10 @@ namespace {
       metadata.product     = "V2 hihat";
       metadata.description = "Two Cymbals and a Pedal";
       metadata.home        = "https://versioduo.com/#hihat";
-
-      system.download  = "https://versioduo.com/download";
-      system.configure = "https://versioduo.com/configure";
-
-      // https://github.com/versioduo/arduino-board-package/blob/main/boards.txt
-      usb.pid            = 0xe9e0;
-      usb.ports.standard = 16;
+      system.download      = "https://versioduo.com/download";
+      system.configure     = "https://versioduo.com/configure";
+      usb.pid              = 0xe9e0; // https://github.com/versioduo/arduino-board-package/blob/main/boards.txt
+      usb.ports.standard   = 16;
     }
 
     auto allNotesOff() {
