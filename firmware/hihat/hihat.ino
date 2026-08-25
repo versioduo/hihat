@@ -19,7 +19,7 @@ namespace {
     };
   }
 
-  V2Device::Info            Info{V2DeviceInfo("com.versioduo.hihat", 8, "versioduo:samd:drum")};
+  V2Device::Info            Info{V2DeviceInfo("com.versioduo.hihat", 9, "versioduo:samd:drum")};
   V2LED::WS2812<LEDs::size> LED(PIN_LED_WS2812, sercom2, SPI_PAD_0_SCK_1, PIO_SERCOM);
   V2LED::WS2812<16>         LEDExt(PIN_LED_WS2812_EXT, sercom4, SPI_PAD_0_SCK_1, PIO_SERCOM);
   V2Link::Port              Plug(&SerialPlug, PIN_SERIAL_PLUG_TX_ENABLE, "plug");
@@ -336,10 +336,14 @@ namespace {
       if (_rainbow > 0.f)
         return;
 
-      if (v > 0.f)
-        LEDExt.hsv({V2Colour::Orange, 0.8, 0.2f + (0.8f * v * _brightness)});
-      else
+      if (v > 0.f) {
+        // Dim to warm.
+        auto saturation{0.7f + (0.2f * (1.f - v))};
+        auto brightness{0.3f + (0.7f * v * _brightness)};
+        LEDExt.hsv({V2Colour::Orange, saturation, brightness});
+      } else {
         LEDExt.brightness(0);
+      }
     }
 
     auto brightness() -> float {
@@ -386,7 +390,7 @@ namespace {
       system.download      = "https://versioduo.com/download";
       system.configure     = "https://versioduo.com/configure";
       usb.pid              = 0xe9e0; // https://github.com/versioduo/arduino-board-package/blob/main/boards.txt
-      usb.ports.standard   = 16;
+      usb.ports.standard   = 8;
     }
 
     auto allNotesOff() {
@@ -485,7 +489,7 @@ namespace {
           float seconds{0.035};
         } min;
         struct {
-          float watts{6};
+          float watts{8};
           float seconds{0.015};
         } max;
       } range;
