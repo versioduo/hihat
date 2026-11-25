@@ -19,7 +19,7 @@ namespace {
     };
   }
 
-  V2Device::Info            Info{V2DeviceInfo("com.versioduo.hihat", 9, "versioduo:samd:drum")};
+  V2Device::Info            Info{V2DeviceInfo("com.versioduo.hihat", 10, "versioduo:samd:drum")};
   V2LED::WS2812<LEDs::size> LED(PIN_LED_WS2812, sercom2, SPI_PAD_0_SCK_1, PIO_SERCOM);
   V2LED::WS2812<16>         LEDExt(PIN_LED_WS2812_EXT, sercom4, SPI_PAD_0_SCK_1, PIO_SERCOM);
   V2Link::Port              Plug(&SerialPlug, PIN_SERIAL_PLUG_TX_ENABLE, "plug");
@@ -115,7 +115,7 @@ namespace {
     constexpr Pulse() :
       V2Solenoids({
         .current{.max{1}, .alpha{0.001}},
-        .resistance{.min{10}, .max{60}},
+        .resistance{.min{3}, .max{60}},
         .fade{.inSec{0.35}, .outSec{0.35}},
         .hold{.peakUsec{100 * 1000}, .fraction{0.5}},
       }) {}
@@ -149,12 +149,17 @@ namespace {
       return voltage / 1350.f * 3900.f;
     }
 
-    // One single port at a time is connected to 3.3V. The load and a 100Ω resistor
-    // form a voltage divider.
-    auto readResistanceVoltage() -> float override {
+    // A single port at a time is connected to 3.3V. The load and a 100Ω resistor form a voltage divider.
+    auto readResistanceRatio() -> float override {
       auto id{V2Base::Analog::ADC::getID(PIN_RESISTANCE_SENSE)};
       auto channel{V2Base::Analog::ADC::getChannel(PIN_RESISTANCE_SENSE)};
-      return 3.3f * ADC[id].readChannel(channel);
+
+      float min{0.046};
+      auto  ratio{ADC[id].readChannel(channel) - min};
+      if (ratio < 0.f)
+        return 0;
+
+      return ratio * (1.f + min);
     }
 
     auto setLED(LEDMode state, uint8_t port = 0, float value = -1) -> void override {
